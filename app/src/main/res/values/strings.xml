@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">c2_w3_okhttp_auth</string>
+    <string name="email">email</string>
+    <string name="name">name</string>
+    <string name="password_enter">password</string>
+    <string name="password_enter_again">password again</string>
+    <string name="register">register</string>
+    <string name="password">password</string>
+    <string name="login_enter">Login enter</string>
+    <string name="login_hint">login</string>
+    <string name="login_error">login error</string>
+    <string name="input_error">input error</string>
+    <string name="login_register_success">login success</string>
+    <string name="login_register_error">login register error</string>
+    <string name="auth_error">authorization error</string>
+    <string name="auth_success">authorization success</string>
+</resources>
