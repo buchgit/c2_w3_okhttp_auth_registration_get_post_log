@@ -1,4 +1,4 @@
-package com.example.c2_w3_okhttp_auth;
+package com.example.c2_w3_okhttp_auth.models;
 
 import com.google.gson.annotations.SerializedName;
 

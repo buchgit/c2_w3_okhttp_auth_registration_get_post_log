@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
+import com.example.c2_w3_okhttp_auth.models.User;
 
 public class ProfileActivity extends AppCompatActivity {
     public static final String USER_KEY = "USER_KEY";
