@@ -10,7 +10,7 @@ public class ProfileActivity extends AppCompatActivity {
     public static final String USER_KEY = "USER_KEY";
 
     private TextView mEmail;
-    private TextView mPassword;
+    private TextView mName;
     private User mUser;
 
     private View.OnClickListener mOnPhotoClickListener = new View.OnClickListener() {
@@ -25,12 +25,12 @@ public class ProfileActivity extends AppCompatActivity {
         setContentView(R.layout.ac_profile);
 
         mEmail = findViewById(R.id.tvEmail);
-        mPassword = findViewById(R.id.tvPassword);
+        mName = findViewById(R.id.tvName);
 
         Bundle bundle = getIntent().getExtras();
         mUser = (User) bundle.get(USER_KEY);
         mEmail.setText(mUser.getEmail());
-        mPassword.setText(mUser.getPassword());
+        mName.setText(mUser.getName());
 
     }
 }

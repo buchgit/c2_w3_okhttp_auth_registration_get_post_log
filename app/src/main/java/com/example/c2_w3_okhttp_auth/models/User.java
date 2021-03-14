@@ -29,6 +29,11 @@ public class User implements Serializable {
         mName = name;
     }
 
+    public User(UserDTO userDTO) {
+        mEmail = userDTO.getData().getEmail();
+        mName = userDTO.getData().getName();
+    }
+
     public String getEmail() {
         return mEmail;
     }
