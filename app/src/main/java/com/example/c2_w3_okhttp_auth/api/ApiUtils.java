@@ -1,5 +1,6 @@
-package com.example.c2_w3_okhttp_auth;
+package com.example.c2_w3_okhttp_auth.api;
 
+import com.example.c2_w3_okhttp_auth.BuildConfig;
 import com.google.gson.Gson;
 import okhttp3.*;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -12,6 +13,7 @@ public class ApiUtils {
     private static OkHttpClient client;
     private static Retrofit retrofitClient;
     private static Gson gson;
+    private static ServerApi api;
 
     public static OkHttpClient getBasicAuthClient(String email, String password, boolean newInstance) {
         if (newInstance || client == null) {
@@ -52,5 +54,12 @@ public class ApiUtils {
 
     public static void setRetrofitClient(Retrofit retrofitClient) {
         ApiUtils.retrofitClient = retrofitClient;
+    }
+
+    public static ServerApi getApi(){
+        if (api==null){
+            return getRetrofitClient().create(ServerApi.class);
+        }
+        return api;
     }
 }

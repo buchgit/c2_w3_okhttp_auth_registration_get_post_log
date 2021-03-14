@@ -13,10 +13,16 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.fragment.app.Fragment;
+import com.example.c2_w3_okhttp_auth.api.ApiUtils;
+import com.example.c2_w3_okhttp_auth.api.ServerApi;
 import com.example.c2_w3_okhttp_auth.models.User;
 import com.google.gson.Gson;
 import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -44,44 +50,39 @@ public class RegistrationFragment extends Fragment {
                         , mName.getText().toString()
                         , mPassword.getText().toString());
 
-                Request request = new Request.Builder()
-                        .url(BuildConfig.SERVER_URL.concat("registration"))
-                        .post(RequestBody.create(JSON, new Gson().toJson(user)))
-                        .build();
+                ApiUtils.getApi().registration(user).enqueue(
+                        new Callback<Void>() {
+                            final Handler handler = new Handler(Objects.requireNonNull(getActivity()).getMainLooper());
 
-                OkHttpClient client = new OkHttpClient();
-
-                client.newCall(request).enqueue(new Callback() {
-
-                    final Handler handler = new Handler(Objects.requireNonNull(getActivity()).getMainLooper());
-
-                    @Override
-                    public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                        handler.post(new Runnable() {
                             @Override
-                            public void run() {
-                                showMessage(R.string.login_register_error);
+                            public void onResponse(Call<Void> call, final Response<Void> response) {
+                                handler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        if (response.isSuccessful()) {
+                                            showMessage(R.string.login_register_success);
+                                            assert getFragmentManager() != null;
+                                            getFragmentManager().popBackStack();
+                                        } else {
+                                            //todo написать детальную обработку ошибок
+                                            showMessage(R.string.login_register_error);
+                                        }
+                                    }
+                                });
                             }
-                        });
-                    }
 
-                    @Override
-                    public void onResponse(@NotNull Call call, @NotNull final Response response) throws IOException {
-                        handler.post(new Runnable() {
                             @Override
-                            public void run() {
-                                if (response.isSuccessful()) {
-                                    showMessage(R.string.login_register_success);
-                                    assert getFragmentManager() != null;
-                                    getFragmentManager().popBackStack();
-                                } else {
-                                    //todo написать детальную обработку ошибок
-                                    showMessage(R.string.login_register_error);
-                                }
+                            public void onFailure(Call<Void> call, Throwable t) {
+                                handler.post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        showMessage(R.string.login_register_error);
+                                    }
+                                });
                             }
-                        });
-                    }
-                });
+                        }
+
+                );
             } else {
                 showMessage(R.string.input_error);
             }
