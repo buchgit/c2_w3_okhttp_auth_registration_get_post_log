@@ -7,6 +7,7 @@ import okhttp3.logging.HttpLoggingInterceptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ApiUtils {
@@ -46,6 +47,7 @@ public class ApiUtils {
                     //need for interceptor
                     .client(getBasicAuthClient("","",false))//"все пустые, так как берем данные из OkHttpClient"- х.з.,что это значит
                     .addConverterFactory(GsonConverterFactory.create())
+                    .addCallAdapterFactory(RxJava2CallAdapterFactory.create())//чтобы запросы превращались в сущности RxJava2
                     .build();
         }
         return retrofitClient;

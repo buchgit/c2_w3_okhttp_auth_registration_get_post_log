@@ -1,7 +1,7 @@
 package com.example.c2_w3_okhttp_auth;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
-import android.os.Handler;
 import android.text.TextUtils;
 import android.util.Patterns;
 import android.view.LayoutInflater;
@@ -14,18 +14,12 @@ import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.fragment.app.Fragment;
 import com.example.c2_w3_okhttp_auth.api.ApiUtils;
-import com.example.c2_w3_okhttp_auth.api.ServerApi;
 import com.example.c2_w3_okhttp_auth.models.User;
-import com.google.gson.Gson;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Action;
+import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
 import okhttp3.*;
-import org.jetbrains.annotations.NotNull;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
-
-import java.io.IOException;
-import java.util.Objects;
 
 public class RegistrationFragment extends Fragment {
 
@@ -42,6 +36,7 @@ public class RegistrationFragment extends Fragment {
     }
 
     private final View.OnClickListener mOnRegistrationClickListener = new View.OnClickListener() {
+        @SuppressLint("CheckResult")
         @Override
         public void onClick(View view) {
             if (isInputValid()) {
@@ -50,39 +45,26 @@ public class RegistrationFragment extends Fragment {
                         , mName.getText().toString()
                         , mPassword.getText().toString());
 
-                ApiUtils.getApi().registration(user).enqueue(
-                        new Callback<Void>() {
-                            final Handler handler = new Handler(Objects.requireNonNull(getActivity()).getMainLooper());
+                ApiUtils.getApi()
+                        .registration(user)//здесь на выходе Completable, поэтому в Action будет не onNext,  onComplete
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(new Action() {//onComplete
+                                       @Override
+                                       public void run() throws Exception {
+                                           showMessage(R.string.login_register_success);
+                                           assert getFragmentManager() != null;
+                                           getFragmentManager().popBackStack();
 
-                            @Override
-                            public void onResponse(Call<Void> call, final Response<Void> response) {
-                                handler.post(new Runnable() {
+                                       }
+                                   },
+                                new Consumer<Throwable>() {//onError
                                     @Override
-                                    public void run() {
-                                        if (response.isSuccessful()) {
-                                            showMessage(R.string.login_register_success);
-                                            assert getFragmentManager() != null;
-                                            getFragmentManager().popBackStack();
-                                        } else {
-                                            //todo написать детальную обработку ошибок
-                                            showMessage(R.string.login_register_error);
-                                        }
-                                    }
-                                });
-                            }
-
-                            @Override
-                            public void onFailure(Call<Void> call, Throwable t) {
-                                handler.post(new Runnable() {
-                                    @Override
-                                    public void run() {
+                                    public void accept(Throwable throwable) throws Exception {
                                         showMessage(R.string.login_register_error);
                                     }
                                 });
-                            }
-                        }
 
-                );
             } else {
                 showMessage(R.string.input_error);
             }
