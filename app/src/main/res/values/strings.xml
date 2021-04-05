@@ -14,4 +14,7 @@
     <string name="login_register_error">login register error</string>
     <string name="auth_error">authorization error</string>
     <string name="auth_success">authorization success</string>
+    <string name="request_error">request error</string>
+    <string name="registration_error">registration error</string>
+    <string name="registration_success">registration success</string>
 </resources>

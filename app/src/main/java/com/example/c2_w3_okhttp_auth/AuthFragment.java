@@ -11,20 +11,19 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.fragment.app.Fragment;
 import com.example.c2_w3_okhttp_auth.api.ApiUtils;
 import com.example.c2_w3_okhttp_auth.models.User;
-import com.example.c2_w3_okhttp_auth.models.UserDTO;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import okhttp3.*;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 
-import java.util.Objects;
+
+import java.io.IOException;
+
 
 public class AuthFragment extends Fragment {
 
@@ -46,62 +45,58 @@ public class AuthFragment extends Fragment {
         @Override
         public void onClick(View view) {
             if (isEmailValid() && isPasswordValid()) {
-
-                OkHttpClient client = ApiUtils.getBasicAuthClient(
-                        mEmail.getText().toString()
-                        , mPassword.getText().toString()
-                        , true);
-
-                Retrofit.Builder builder = new Retrofit.Builder();
-                Retrofit retrofit = builder
-                        .baseUrl(BuildConfig.SERVER_URL)
-                        .client(client)
-                        .addConverterFactory(GsonConverterFactory.create())
+                Request request = new Request.Builder()
+                        .url(BuildConfig.SERVER_URL.concat("/user"))
                         .build();
 
-                ApiUtils.setRetrofitClient(retrofit);
+                OkHttpClient client = ApiUtils.getBasicAuthClient(
+                        mEmail.getText().toString(),
+                        mPassword.getText().toString(),
+                        true);
+                client.newCall(request).enqueue(new Callback() {
+                    //используем Handler, чтобы показывать ошибки в Main потоке, т.к. наши коллбеки возвращаются в рабочем потоке
+                    Handler mainHandler = new Handler(getActivity().getMainLooper());
 
-                ApiUtils.getApi().basicAuth().enqueue(
-
-                        new Callback<UserDTO>() {
-                            final Handler handler = new Handler(Objects.requireNonNull(getActivity()).getMainLooper());
-
+                    @Override
+                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                        mainHandler.post(new Runnable() {
                             @Override
-                            public void onResponse(Call<UserDTO> call, Response<UserDTO> response) {
-                                handler.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        if (response.isSuccessful()) {
-
-                                            UserDTO userDTO = response.body();
-                                            User user = new User(userDTO);
-
-                                            showMessage(R.string.auth_success);
-                                            Intent startProfileIntent = new Intent(getActivity(), ProfileActivity.class);
-                                            startProfileIntent.putExtra(ProfileActivity.USER_KEY, user);
-                                            startActivity(startProfileIntent);
-
-                                            getActivity().finish();
-
-                                        } else {
-                                            //todo написать детальную обработку ошибок
-                                            showMessage(R.string.auth_error);
-                                        }
-                                    }
-                                });
+                            public void run() {
+                                showMessage(R.string.request_error);
                             }
+                        });
+                    }
 
+                    @Override
+                    public void onResponse(@NonNull Call call, @NonNull final Response response) throws IOException {
+                        mainHandler.post(new Runnable() {
                             @Override
-                            public void onFailure(Call<UserDTO> call, Throwable t) {
-                                handler.post(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        showMessage(R.string.auth_error);
+                            public void run() {
+                                if (!response.isSuccessful()) {
+                                    //todo добавить полноценную обработку ошибок по кодам ответа от сервера и телу запроса
+                                    showMessage(R.string.auth_error);
+                                } else {
+                                    try {
+                                        Gson gson = new Gson();
+                                        JsonObject json = gson.fromJson(response.body().string(), JsonObject.class);
+                                        User user = gson.fromJson(json.get("data"), User.class);
+
+                                        Intent startProfileIntent = new Intent(getActivity(), ProfileActivity.class);
+                                        startProfileIntent.putExtra(ProfileActivity.USER_KEY, user);
+                                        startActivity(startProfileIntent);
+                                        getActivity().finish();
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
                                     }
-                                });
+                                }
                             }
-                        }
-                );
+                        });
+                    }
+
+
+                });
+            } else {
+                showMessage(R.string.input_error);
             }
         }
     };

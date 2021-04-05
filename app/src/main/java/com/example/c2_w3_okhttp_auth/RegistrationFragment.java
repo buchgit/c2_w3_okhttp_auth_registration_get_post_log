@@ -15,56 +15,43 @@ import androidx.annotation.StringRes;
 import androidx.fragment.app.Fragment;
 import com.example.c2_w3_okhttp_auth.api.ApiUtils;
 import com.example.c2_w3_okhttp_auth.models.User;
+
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.functions.Action;
-import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
-import okhttp3.*;
 
 public class RegistrationFragment extends Fragment {
-
-    public static final MediaType JSON = MediaType.parse("application/json;charset=utf-8");
-
     private EditText mEmail;
+    private EditText mName;
     private EditText mPassword;
     private EditText mPasswordAgain;
-    private EditText mName;
     private Button mRegistration;
 
     public static RegistrationFragment newInstance() {
         return new RegistrationFragment();
     }
 
-    private final View.OnClickListener mOnRegistrationClickListener = new View.OnClickListener() {
+    private View.OnClickListener mOnRegistrationClickListener = new View.OnClickListener() {
         @SuppressLint("CheckResult")
         @Override
         public void onClick(View view) {
             if (isInputValid()) {
                 User user = new User(
-                        mEmail.getText().toString()
-                        , mName.getText().toString()
-                        , mPassword.getText().toString());
+                        mEmail.getText().toString(),
+                        mName.getText().toString(),
+                        mPassword.getText().toString());
 
                 ApiUtils.getApi()
-                        .registration(user)//здесь на выходе Completable, поэтому в Action будет не onNext,  onComplete
+                        .registration(user)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new Action() {//onComplete
-                                       @Override
-                                       public void run() throws Exception {
-                                           showMessage(R.string.login_register_success);
-                                           assert getFragmentManager() != null;
-                                           getFragmentManager().popBackStack();
-
-                                       }
-                                   },
-                                new Consumer<Throwable>() {//onError
-                                    @Override
-                                    public void accept(Throwable throwable) throws Exception {
-                                        showMessage(R.string.login_register_error);
-                                    }
+                        .subscribe(
+                                () -> {
+                                    showMessage(R.string.registration_success);
+                                    getFragmentManager().popBackStack();
+                                }, throwable -> {
+                                    //todo добавить полноценную обработку ошибок по кодам ответа от сервера и телу запроса
+                                    showMessage(R.string.request_error);
                                 });
-
             } else {
                 showMessage(R.string.input_error);
             }
@@ -77,10 +64,10 @@ public class RegistrationFragment extends Fragment {
         View view = inflater.inflate(R.layout.fr_registration, container, false);
 
         mEmail = view.findViewById(R.id.etEmail);
+        mName = view.findViewById(R.id.etName);
         mPassword = view.findViewById(R.id.etPassword);
         mPasswordAgain = view.findViewById(R.id.tvPasswordAgain);
         mRegistration = view.findViewById(R.id.btnRegistration);
-        mName = view.findViewById(R.id.etName);
 
         mRegistration.setOnClickListener(mOnRegistrationClickListener);
 
@@ -88,12 +75,9 @@ public class RegistrationFragment extends Fragment {
     }
 
     private boolean isInputValid() {
-        String email = mEmail.getText().toString();
-        if (isEmailValid(email) && isPasswordsValid()) {
-            return true;
-        }
-
-        return false;
+        return isEmailValid(mEmail.getText().toString())
+                && !TextUtils.isEmpty(mName.getText())
+                && isPasswordsValid();
     }
 
     private boolean isEmailValid(String email) {
